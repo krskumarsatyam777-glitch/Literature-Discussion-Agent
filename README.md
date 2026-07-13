@@ -22,6 +22,12 @@ Unlike a traditional chatbot that answers solely from the language model's inter
 - Interactive Streamlit interface
 
 ---
+## Live Demo
+
+**Application:** https://literature-discussion-agent.onrender.com
+
+**GitHub Repository:** https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent
+---
 
 # Technologies Used
 

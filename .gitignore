@@ -1,0 +1,11 @@
+venv/
+.env
+__pycache__/
+*.pyc
+
+chat_logs/
+reading_diary/
+
+.streamlit/
+
+.idea/

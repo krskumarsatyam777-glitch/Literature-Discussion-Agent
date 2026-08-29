@@ -10,7 +10,7 @@ Application: https://literature-discussion-agent.onrender.com
 
 GitHub Repository: https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent
 
-Check the `screenshots/` folder to see the app in action.
+Check the [`screenshots/`](./screenshots) folder to see the app in action.
 
 ## Features
 
@@ -254,7 +254,7 @@ streamlit run app.py
 
 ## Development Notebook
 
-The repository includes a development notebook documenting the incremental development of the project, including:
+ The repository includes a [development notebook](./notebook/development_and_testing.ipynb) documenting the incremental development of the project, including:
 
 - LangChain tool development
 - Prompt engineering

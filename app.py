@@ -137,13 +137,19 @@ with st.sidebar:
 
     st.header("Options")
 
-    if st.button("Export Chat"):
-        filename = export_chat()
-        st.success(f"Saved as {filename}")
+    st.download_button(
+        label="Export Chat",
+        data=export_chat(),
+        file_name="chat_export.md",
+        mime="text/markdown",
+    )
 
-    if st.button("Export Reading Diary"):
-        filename = export_diary()
-        st.success(f"Saved as {filename}")
+    st.download_button(
+        label="Export Reading Diary",
+        data=export_diary(),
+        file_name="reading_diary.md",
+        mime="text/markdown",
+    )
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):

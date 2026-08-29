@@ -19,9 +19,9 @@ def log_chat(role: str, content: str):
     }
     )
 
-def export_chat(filename: str = "chat_export.md") -> str:
+def export_chat() -> str:
     """
-        Export chat history as a Markdown file.
+        Build chat history as Markdown content, ready for download.
         """
     lines = ["#Chat Export\n"]
 
@@ -29,12 +29,7 @@ def export_chat(filename: str = "chat_export.md") -> str:
         role_label = "**You**" if entry["role"] == "user" else "**Agent**"
         lines.append(f"### {role_label} ({entry['timestamp']})\n{entry['content']}\n")
 
-    content = "\n".join(lines)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
-
-    return filename
+    return "\n".join(lines)
 
 #reading diary
 diary_entries = []
@@ -69,9 +64,9 @@ def log_diary_entry(user_query: str, agent_response: str, diary_chain):
     except Exception as e:
         print(f"Diary extraction skipped (non-critical): {e}")
 
-def export_diary(filename: str = "reading_diary.md") -> str:
+def export_diary() -> str:
     """
-       Export reading diary as a Markdown table.
+       Build reading diary as Markdown table content, ready for download.
        """
     lines = [
         "# Reading Diary\n",
@@ -87,11 +82,5 @@ def export_diary(filename: str = "reading_diary.md") -> str:
             f"| {e['title']} "
             f"| {e['takeaway']} |"
         )
-    content = "\n".join(lines)
 
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
-
-    print(f"Diary exported to {filename} ({len(diary_entries)} entries)")
-    return filename
-
+    return "\n".join(lines)

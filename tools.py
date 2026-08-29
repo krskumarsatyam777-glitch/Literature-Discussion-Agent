@@ -303,9 +303,7 @@ def search_thematic_image_tool(theme_query: str) -> str:
     return search_thematic_image(theme_query)
 
 
-tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
-
-# Trusted literary domains (Tier 1 — no dedicated API, so accessed via domain-restricted search)
+# Trusted literary domains
 TRUSTED_LITERARY_DOMAINS = ["rekhta.org", "hindwi.org", "lithub.com"]
 
 def search_web_tiered(query: str, tier: str = "literary") -> str:

@@ -179,10 +179,3 @@ def chat(query: str, history: list, image_path: str | None = None) -> tuple[str,
 
     return response, image_data
 
-import time
-
-def timed_llm_invoke(*args, **kwargs):
-    start = time.time()
-    result = llm.invoke(*args, **kwargs)
-    print(f"[LLM CALL] took {time.time() - start:.2f}s")
-    return result

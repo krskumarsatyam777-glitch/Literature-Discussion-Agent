@@ -1,106 +1,156 @@
 # Literature Discussion Agent
 
-A source-grounded literature discussion app. Ask about a poem, novel, play, author or literary theme (or upload a photo of a poem) and the agent retrieves the text and background from literary sources first, then discusses it in a conversational way.
+**Live demo:** [Open the Literature Discussion Agent](https://literature-discussion-agent.onrender.com/)
 
-Built with **LangGraph**, **DeepSeek**, **Streamlit** and **PostgreSQL**.
+> **Demo note:** The hosted service may take a little longer to respond after a period of inactivity. The demo's saved chats are shared between visitors, so please do not enter private or sensitive information.
 
-<!-- Add 1-2 screenshots from /screenshots here, e.g. ![Chat view](screenshots/your-file.png) -->
+A source-grounded literature discussion app. Ask about a poem, novel, play, author, or literary theme—or upload a photo of a poem. The agent retrieves literary text and background information from online sources before discussing the work conversationally.
 
----
+Built with **LangGraph**, **DeepSeek**, **Streamlit**, and **PostgreSQL**.
 
 ## Features
 
-- **Source-grounded answers.** Responses are written from retrieved sources (Wikisource, Wikipedia, Rekhta, Hindwi, Literary Hub, web search) rather than from the model's memory alone.
-- **Smart routing.** Each message is analysed and treated as a new topic, a related work, or a follow-up. Follow-ups that the conversation can already answer skip retrieval.
-- **Scope guard.** Non-literary requests are politely declined.
-- **Parallel retrieval.** Wikisource, Wikipedia and (for Hindi and Urdu) trusted literary sites are searched at the same time.
-- **Sufficiency check and web fallback.** If the retrieved sources do not answer the request, the agent falls back to open-web search. For a full-text request it refuses to substitute commentary when the complete text cannot be verified.
-- **Image upload with OCR.** Upload a photo of a poem (English or Hindi) and the agent reads it with Tesseract and identifies the work.
-- **Related images with credits.** Wikimedia Commons and Unsplash images are shown with attribution and licence information.
-- **Poem formatting.** Poems appear in their original line breaks, in a styled quote block.
-- **Saved chats.** Conversations persist in PostgreSQL, with a chat sidebar and delete option.
-- **Live progress.** The interface shows friendly status steps and streams the answer as it is written.
-- **Tracing and feedback.** Runs are traced in LangSmith (route, tools used, whether the fallback fired) and each answer has a thumbs up/down.
-
----
+- **Source-grounded answers:** Uses retrieved material from sources such as Wikisource, Wikipedia, Rekhta, Hindwi, Literary Hub, and web search instead of relying on the model's memory alone.
+- **Smart routing:** Classifies messages as new topics, related works, or follow-ups. Follow-ups that the current conversation can answer may skip retrieval.
+- **Literature scope guard:** Politely declines requests outside the app's literary focus.
+- **Parallel retrieval:** Searches Wikisource and Wikipedia, and searches trusted Hindi and Urdu literary sources where relevant.
+- **Sufficiency checks and web fallback:** Uses open-web search when retrieved sources are insufficient. For full-text requests, it avoids substituting commentary when the complete text cannot be verified.
+- **Image upload and OCR:** Accepts poem images in English or Hindi and uses Tesseract OCR to help identify the work. OCR requires the Tesseract system executable and language data to be installed in the runtime.
+- **Related images with credits:** Retrieves images from Wikimedia Commons and Unsplash with attribution and licence information where available.
+- **Poem formatting:** Preserves poem line breaks in a styled quote block.
+- **Saved chats:** Stores conversation history in PostgreSQL and provides a chat sidebar and delete option.
+- **Live progress:** Displays status updates and streams the answer as it is generated.
+- **Tracing and feedback:** Can send traces to LangSmith when tracing is configured; answers also include thumbs-up/thumbs-down feedback.
 
 ## How it works
 
 ![Agent graph flowchart](screenshots/workflow.png)
 
-The workflow is a fixed LangGraph graph with LLM-based decisions at key points (analysis, candidate selection, sufficiency check). Conversation state is checkpointed in PostgreSQL.
-
----
+The app uses a LangGraph workflow with LLM-based decisions for analysis, routing, candidate selection, and retrieval sufficiency. Conversation state is checkpointed in PostgreSQL.
 
 ## Tech stack
 
 | Area | Tools |
-|------|-------|
+|---|---|
 | Orchestration | LangGraph, LangChain Core |
-| Language model | DeepSeek (via the OpenAI-compatible API) |
+| Language model | DeepSeek via its OpenAI-compatible API |
 | Interface | Streamlit |
-| Storage | PostgreSQL (LangGraph checkpointer and chat list) |
+| Storage | PostgreSQL for LangGraph checkpoints and the chat list |
 | Retrieval | Wikisource, Wikipedia, Rekhta, Hindwi, Literary Hub, Tavily web search |
 | Images | Wikimedia Commons, Unsplash |
 | OCR | Tesseract (English and Hindi) |
-| Tracing | LangSmith |
-
----
+| Tracing | LangSmith (optional) |
 
 ## Project structure
 
-```
-app.py          Streamlit interface, chat sidebar, streaming
-graph.py        LangGraph workflow: analysis, routing, retrieval, generation
-tools.py        Retrieval, OCR and image-search tools
+```text
+app.py          Streamlit interface, chat sidebar, and streaming
+graph.py        LangGraph workflow: analysis, routing, retrieval, and generation
+tools.py        Retrieval, OCR, and image-search tools
 prompts.py      System and analyzer prompts
 thread.py       Chat list stored in PostgreSQL
 configure.py    Model settings
-.streamlit/     Theme configuration
+.streamlit/     Streamlit theme configuration
+screenshots/    Workflow diagram and project screenshots
 ```
 
----
+## Local setup
 
-## Setup
+### Requirements
 
-**Requirements:** Python 3.11+, a PostgreSQL database, and Tesseract OCR.
+- Python 3.11 or newer
+- A PostgreSQL database reachable from your computer
+- API keys for the services you use
+- Tesseract OCR with English and Hindi language data if you want to use image upload
 
-1. Clone the repository and create a virtual environment.
+### 1. Clone the repository and install dependencies
 
-   ```bash
-   git clone https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent.git
-   cd Literature-Discussion-Agent
-   python -m venv venv
-   source venv/bin/activate        # Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent.git
+cd Literature-Discussion-Agent
+python -m venv venv
+```
 
-2. Install Tesseract with English and Hindi data.
+Activate the environment:
 
-   ```bash
-   sudo apt install tesseract-ocr tesseract-ocr-hin    # Debian/Ubuntu
-   ```
+```bash
+# macOS / Linux
+source venv/bin/activate
+```
 
-   On Windows, install Tesseract and set `TESSERACT_CMD` to the path of `tesseract.exe`.
+```powershell
+# Windows PowerShell
+.\venv\Scripts\Activate.ps1
+```
 
-3. Copy `.env.example` to `.env` and fill in the values.
+Install packages:
 
-   ```env
-   DEEPSEEK_API_KEY=
-   DATABASE_URL=postgresql://user:password@host:5432/dbname
-   TAVILY_API_KEY=
-   UNSPLASH_ACCESS_KEY=
-   TESSERACT_CMD=            # only if Tesseract is not on your PATH
-   LANGSMITH_API_KEY=        # optional, for tracing and feedback
-   ```
+```bash
+python -m pip install -r requirements.txt
+```
 
-4. Run the app. The database tables are created automatically on first start.
+### 2. Install Tesseract OCR (optional, for image uploads)
 
-   ```bash
-   streamlit run app.py
-   ```
+On Debian or Ubuntu:
 
----
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr tesseract-ocr-hin
+```
+
+On Windows, install Tesseract OCR with the English and Hindi language data. If `tesseract.exe` is not on your `PATH`, set `TESSERACT_CMD` in `.env` to its path, for example:
+
+```env
+TESSERACT_CMD=C:/Program Files/Tesseract-OCR/tesseract.exe
+```
+
+`pytesseract` is a Python wrapper; it does not install the Tesseract executable itself. A hosted deployment must also have Tesseract and the required language data installed for OCR to work there.
+
+### 3. Configure environment variables
+
+Copy `.env.example` to `.env` and fill in the values. Do not commit `.env` or share its secrets.
+
+```env
+# Required for the core app
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require
+TAVILY_API_KEY=your_tavily_api_key
+
+# Needed for related-image search
+UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+
+# Optional: LangSmith tracing
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your_langsmith_api_key
+LANGSMITH_PROJECT=literature-agent-v2
+
+# Optional: set only if Tesseract is not on PATH
+TESSERACT_CMD=
+```
+
+Use the complete connection string supplied by your PostgreSQL provider. Keep any connection parameters the provider includes, such as SSL settings. The example above is a placeholder, not a working database URL. For a hosted deployment, set these values in the host's environment-variable settings rather than relying on your local `.env` file.
+
+### 4. Run the app
+
+```bash
+streamlit run app.py
+```
+
+The app initializes its database tables on startup. The PostgreSQL database must be reachable and the `DATABASE_URL` must be valid.
+
+## Deployment on Render
+
+The live demo is hosted at [literature-discussion-agent.onrender.com](https://literature-discussion-agent.onrender.com/).
+
+Set the required environment variables in **Render → your service → Environment**. At minimum, configure `DATABASE_URL`, `DEEPSEEK_API_KEY`, and `TAVILY_API_KEY`; add `UNSPLASH_ACCESS_KEY` for related-image search and the `LANGSMITH_*` variables if you want tracing. The local `.env` file is not automatically uploaded to Render.
+
+A typical Streamlit start command on Render is:
+
+```bash
+streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+```
+
+For image OCR on Render, ensure the deployed runtime installs Tesseract and the English/Hindi language data. Installing `pytesseract` through `requirements.txt` alone is not sufficient.
 
 ## Example queries
 
@@ -111,46 +161,45 @@ configure.py    Model settings
 - What do critics say about *The Waste Land*?
 - Upload a photo of a poem and ask what it is.
 
----
-
 ## Current limitations
 
-- **Retrieval relies on hand-set rules.** Title matching, page-type detection and thresholds are heuristics that have not been tuned on a labelled dataset.
-- **Wikipedia matching is unverified.** The first usable article is chosen, so an ambiguous name can occasionally return the wrong page.
-- **Long works.** Plays and novels split across many Wikisource subpages are not yet followed page by page.
-- **Source coverage is narrow.** Trusted literary sites (Rekhta, Hindwi, Literary Hub) are only searched for Hindi and Urdu queries; English relies on Wikisource, Wikipedia and web fallback.
-- **Non-English queries are slower** because each language edition is searched in sequence.
-- **OCR** supports English and Hindi only, and accuracy depends on image quality.
-- **Chats are not per-user.** All saved chats share one list, so a public deployment would show everyone the same history.
-- **No automated evaluation yet.** Answer quality has been checked manually.
-
----
+- **Heuristic retrieval:** Title matching, page-type detection, and thresholds rely on hand-set rules and have not been tuned on a labelled dataset.
+- **Wikipedia matching:** The selected article may occasionally be wrong for ambiguous titles or names.
+- **Long works:** Plays and novels split across multiple Wikisource subpages are not yet followed page by page in every case.
+- **Source coverage:** Trusted literary sites such as Rekhta, Hindwi, and Literary Hub are searched only for selected language/query types; English queries rely more heavily on Wikisource, Wikipedia, and web fallback.
+- **Latency:** Some non-English queries may take longer because language-specific sources are searched sequentially.
+- **OCR:** Supports English and Hindi only; accuracy depends on image quality and on Tesseract being installed in the runtime.
+- **Shared chat history:** The public demo uses a shared chat list rather than per-user histories. Do not enter private or sensitive content.
+- **Evaluation:** Answer quality has been checked manually; an automated evaluation suite has not yet been added.
 
 ## Future improvements
 
-**Retrieval quality**
-- Replace heuristic matching with semantic ranking (multilingual embeddings, optionally a cross-encoder reranker).
-- Choose thresholds from a labelled set of queries and correct pages, instead of fixed values.
-- Verify the selected Wikipedia article against the intended work or author.
-- Follow index pages and subpages for multi-page works (acts, chapters).
+### Retrieval quality
 
-**Coverage**
-- Add more trusted literary sources and a per-language source configuration (for example Project Gutenberg, Poetry Foundation, Kavita Kosh).
+- Replace heuristic matching with semantic ranking using multilingual embeddings and, optionally, a cross-encoder reranker.
+- Choose thresholds using a labelled set of queries and correct pages.
+- Verify selected Wikipedia articles against the intended work or author.
+- Follow index pages and subpages for multi-page works, including acts and chapters.
+
+### Coverage
+
+- Add more trusted literary sources and configure sources by language, for example Project Gutenberg, Poetry Foundation, and Kavita Kosh.
 - Expand supported languages, including OCR languages.
 
-**Speed**
+### Speed
+
 - Search language editions in parallel and cache repeated lookups.
 
-**Evaluation**
-- Offline evaluation on a fixed test set of queries.
-- Online evaluators for hallucination, over-refusal and latency.
+### Evaluation
 
-**Interface**
-- Chat titles based on the work and author instead of the first message.
-- Per-user chat history.
+- Create an offline evaluation set of representative queries.
+- Add online evaluators for hallucination, over-refusal, and latency.
 
----
+### Interface
+
+- Generate chat titles from the work and author rather than the first message.
+- Add per-user chat history.
 
 ## Acknowledgements
 
-LangGraph, LangChain, DeepSeek, Streamlit, Wikisource, Wikipedia, Wikimedia Commons, Rekhta, Hindwi, Literary Hub, Tavily, Unsplash and Tesseract OCR.
+LangGraph, LangChain, DeepSeek, Streamlit, Wikisource, Wikipedia, Wikimedia Commons, Rekhta, Hindwi, Literary Hub, Tavily, Unsplash, and Tesseract OCR.

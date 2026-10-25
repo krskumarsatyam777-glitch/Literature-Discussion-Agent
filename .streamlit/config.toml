@@ -1,0 +1,8 @@
+[theme]
+base = "light"
+primaryColor = "#9A3F15"
+backgroundColor = "#E8E0D2"
+secondaryBackgroundColor = "#D6CAB4"
+textColor = "#3A2C22"
+font = "Lora:https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap"
+headingFont = "Playfair Display:https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"

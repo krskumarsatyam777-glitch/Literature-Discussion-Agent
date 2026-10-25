@@ -1,293 +1,156 @@
 # Literature Discussion Agent
 
-An AI-powered Literature Discussion Agent built using LangChain, DeepSeek, and Agentic Retrieval-Augmented Generation (RAG) to provide grounded discussions on poems, novels, authors, literary themes, and literary criticism.
+A source-grounded literature discussion app. Ask about a poem, novel, play, author or literary theme (or upload a photo of a poem) and the agent retrieves the text and background from literary sources first, then discusses it in a conversational way.
 
-The agent dynamically retrieves information from trusted literary sources before generating responses, combining retrieval, OCR, web search, thematic image retrieval, and literary recommendations within a single LangChain agent.
+Built with **LangGraph**, **DeepSeek**, **Streamlit** and **PostgreSQL**.
 
-## Live Demo
+<!-- Add 1-2 screenshots from /screenshots here, e.g. ![Chat view](screenshots/your-file.png) -->
 
-Application: https://literature-discussion-agent.onrender.com
-
-GitHub Repository: https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent
-
-Check the [`screenshots/`](./screenshots) folder to see the app in action.
+---
 
 ## Features
 
-- Agentic Retrieval-Augmented Generation (RAG)
-- LangChain Agent with dynamic tool selection
-- OCR support for uploaded literary images
-- Full literary work retrieval from Wikisource
-- Author information retrieval from Wikipedia
-- Web search integration through Tavily
-- Thematic image retrieval using the Unsplash API
-- Literary recommendation system
-- Automatic Reading Diary generation
-- Chat export
-- Reading Diary export
-- Interactive Streamlit interface
+- **Source-grounded answers.** Responses are written from retrieved sources (Wikisource, Wikipedia, Rekhta, Hindwi, Literary Hub, web search) rather than from the model's memory alone.
+- **Smart routing.** Each message is analysed and treated as a new topic, a related work, or a follow-up. Follow-ups that the conversation can already answer skip retrieval.
+- **Scope guard.** Non-literary requests are politely declined.
+- **Parallel retrieval.** Wikisource, Wikipedia and (for Hindi and Urdu) trusted literary sites are searched at the same time.
+- **Sufficiency check and web fallback.** If the retrieved sources do not answer the request, the agent falls back to open-web search. For a full-text request it refuses to substitute commentary when the complete text cannot be verified.
+- **Image upload with OCR.** Upload a photo of a poem (English or Hindi) and the agent reads it with Tesseract and identifies the work.
+- **Related images with credits.** Wikimedia Commons and Unsplash images are shown with attribution and licence information.
+- **Poem formatting.** Poems appear in their original line breaks, in a styled quote block.
+- **Saved chats.** Conversations persist in PostgreSQL, with a chat sidebar and delete option.
+- **Live progress.** The interface shows friendly status steps and streams the answer as it is written.
+- **Tracing and feedback.** Runs are traced in LangSmith (route, tools used, whether the fallback fired) and each answer has a thumbs up/down.
 
-## Technologies Used
+---
 
-| Category | Tool / Library |
-|---|---|
-| Framework | LangChain, Streamlit |
-| Language Model | DeepSeek V4 Flash API |
-| Retrieval Sources | Wikisource, Wikipedia, Tavily Search API |
-| OCR | Tesseract OCR |
-| Image Retrieval | Unsplash API |
-| Programming Language | Python |
+## How it works
 
-## Architecture
+![Agent graph flowchart](screenshots/workflow.png)
 
-```
-                    User Query
-                         │
-                         ▼
-                 Streamlit Interface
-                         │
-                         ▼
-                 LangChain Agent
-                         │
-        Dynamically selects required tools
-                         │
- ┌───────────────┬──────────────┬───────────────┐
- │               │              │               │
- ▼               ▼              ▼               ▼
-OCR        Wikisource     Wikipedia      Tavily Search
- │               │              │               │
- └───────────────┴──────────────┴───────────────┘
-                         │
-          Retrieved Literary Context
-                         │
-                         ▼
-                DeepSeek V4 Flash
-                         │
-                         ▼
-      Literary Discussion + Recommendations
-         + Reading Diary + Thematic Images
-```
+The workflow is a fixed LangGraph graph with LLM-based decisions at key points (analysis, candidate selection, sufficiency check). Conversation state is checkpointed in PostgreSQL.
 
-## Agentic Retrieval-Augmented Generation (RAG)
+---
 
-This project implements Agentic RAG rather than classical vector-database RAG.
+## Tech stack
 
-Instead of retrieving passages from embeddings stored in a vector database, the LangChain Agent dynamically decides which external tools should be used based on the user's request.
+| Area | Tools |
+|------|-------|
+| Orchestration | LangGraph, LangChain Core |
+| Language model | DeepSeek (via the OpenAI-compatible API) |
+| Interface | Streamlit |
+| Storage | PostgreSQL (LangGraph checkpointer and chat list) |
+| Retrieval | Wikisource, Wikipedia, Rekhta, Hindwi, Literary Hub, Tavily web search |
+| Images | Wikimedia Commons, Unsplash |
+| OCR | Tesseract (English and Hindi) |
+| Tracing | LangSmith |
 
-Depending on the query, the agent may retrieve:
+---
 
-- Complete literary works from Wikisource
-- Author information from Wikipedia
-- Additional literary context through Tavily Search
-- Text extracted from uploaded images using OCR
-- Thematic images related to literary works
-- Similar literary recommendations
-
-The retrieved information is then supplied to the DeepSeek language model. This is intended to reduce hallucinations compared to a model relying purely on internal knowledge, by grounding responses in retrieved source material, while enabling richer literary discussions.
-
-## LangChain Agent Workflow
-
-The project is built using a LangChain Agent instead of a fixed sequential pipeline.
-
-Rather than executing the same sequence of operations for every query, the agent reasons about the user's request and dynamically determines which tools are necessary.
-
-For example:
-
-**Poem Analysis**
-```
-User Query
-      │
-      ▼
-Search Wikisource
-      │
-      ▼
-Retrieve Complete Poem
-      │
-      ▼
-Retrieve Author Information
-      │
-      ▼
-Retrieve Thematic Images
-      │
-      ▼
-Generate Literary Analysis
-```
-
-**Author Query**
-```
-User Query
-      │
-      ▼
-Retrieve Wikipedia Information
-      │
-      ▼
-Generate Response
-```
-
-**Image Upload Query**
-```
-User Upload
-      │
-      ▼
-OCR
-      │
-      ▼
-Identify Literary Work
-      │
-      ▼
-Retrieve Text
-      │
-      ▼
-Generate Discussion
-```
-
-This dynamic tool selection allows different requests to follow different execution paths while using the same agent.
-
-## LangChain Components
-
-The project uses several LangChain components to orchestrate the workflow.
-
-- ChatOpenAI interface configured for the DeepSeek API
-- LangChain Agent for reasoning and tool selection
-- Custom LangChain Tools
-- Prompt Templates
-- Runnable Chains
-- Output Parser
-
-## Custom Tools
-
-The application implements multiple custom LangChain tools.
-
-| Tool | Purpose |
-|---|---|
-| OCR Tool | Extract text from uploaded literary images using Tesseract OCR |
-| Wikisource Search Tool | Locate literary works |
-| Wikisource Retrieval Tool | Retrieve complete literary texts |
-| Wikipedia Tool | Retrieve author biographies |
-| Tavily Search Tool | Retrieve additional literary context |
-| Recommendation Tool | Recommend similar literary works |
-| Thematic Image Tool | Retrieve thematic images from Unsplash |
-
-## Prompt Engineering
-
-The system prompt guides the agent to:
-
-- Retrieve literary works before discussing them.
-- Clearly distinguish retrieved facts from interpretation.
-- Avoid inventing quotations or literary facts.
-- Perform deeper thematic and symbolic analysis after retrieval.
-- Use OCR automatically when literary images are uploaded.
-- Retrieve thematic images only when appropriate.
-
-## Reading Diary
-
-Each interaction automatically generates a structured Reading Diary entry containing:
-
-- Literary work discussed
-- Author
-- Themes
-- Symbols
-- Summary of discussion
-
-The Reading Diary can be exported independently of the chat history.
-
-## Project Structure
+## Project structure
 
 ```
-Literature-Discussion-Agent/
-
-│── app.py
-│── agent.py
-│── tools.py
-│── parser.py
-│── prompts.py
-│── configure.py
-│── utils.py
-│── requirements.txt
-│── README.md
-
-├── screenshots/
-├── chat_logs/
-├── reading_diary/
-├── notebooks/
-│      development_and_testing.ipynb
+app.py          Streamlit interface, chat sidebar, streaming
+graph.py        LangGraph workflow: analysis, routing, retrieval, generation
+tools.py        Retrieval, OCR and image-search tools
+prompts.py      System and analyzer prompts
+thread.py       Chat list stored in PostgreSQL
+configure.py    Model settings
+.streamlit/     Theme configuration
 ```
 
-## Installation
+---
 
-Clone the repository.
+## Setup
 
-```
-git clone https://github.com/<your-username>/Literature-Discussion-Agent.git
-cd Literature-Discussion-Agent
-```
+**Requirements:** Python 3.11+, a PostgreSQL database, and Tesseract OCR.
 
-Install the required dependencies.
+1. Clone the repository and create a virtual environment.
 
-```
-pip install -r requirements.txt
-```
+   ```bash
+   git clone https://github.com/krskumarsatyam777-glitch/Literature-Discussion-Agent.git
+   cd Literature-Discussion-Agent
+   python -m venv venv
+   source venv/bin/activate        # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-Create a `.env` file.
+2. Install Tesseract with English and Hindi data.
 
-```
-DEEPSEEK_API_KEY=your_key
-TAVILY_API_KEY=your_key
-UNSPLASH_ACCESS_KEY=your_key
-```
+   ```bash
+   sudo apt install tesseract-ocr tesseract-ocr-hin    # Debian/Ubuntu
+   ```
 
-Run the application.
+   On Windows, install Tesseract and set `TESSERACT_CMD` to the path of `tesseract.exe`.
 
-```
-streamlit run app.py
-```
+3. Copy `.env.example` to `.env` and fill in the values.
 
-## Example Queries
+   ```env
+   DEEPSEEK_API_KEY=
+   DATABASE_URL=postgresql://user:password@host:5432/dbname
+   TAVILY_API_KEY=
+   UNSPLASH_ACCESS_KEY=
+   TESSERACT_CMD=            # only if Tesseract is not on your PATH
+   LANGSMITH_API_KEY=        # optional, for tracing and feedback
+   ```
 
-- Analyze The Road Not Taken.
-- Explain the symbolism in The Waste Land.
-- Compare Hamlet and Macbeth.
-- Explain Ghalib's poetry.
-- Discuss existentialism in Kafka's works.
-- Recommend novels similar to The Trial.
-- Upload an image of a poem for identification and discussion.
+4. Run the app. The database tables are created automatically on first start.
 
-## Development Notebook
+   ```bash
+   streamlit run app.py
+   ```
 
- The repository includes a [development notebook](./notebook/development_and_testing.ipynb) documenting the incremental development of the project, including:
+---
 
-- LangChain tool development
-- Prompt engineering
-- OCR implementation
-- Wikisource parsing
-- Agent testing
-- Migration from Gemini API to DeepSeek API
-- Debugging and experimentation
+## Example queries
 
-## Current Limitations
+- Explain Ghalib's ghazal *Hazaron Khwahishein Aisi*.
+- Discuss the ending of *Hamlet*.
+- Compare *Hamlet* and *Macbeth*.
+- Give me the full text of *Ozymandias* and discuss it.
+- What do critics say about *The Waste Land*?
+- Upload a photo of a poem and ask what it is.
 
-- Response generation can take a bit of time, since the agent may call multiple tools in sequence (retrieval, OCR, search) before generating a reply.
-- Hindi literary retrieval is generally slower than English.
-- OCR accuracy depends on image quality.
-- Thematic image retrieval depends on the availability and relevance of Unsplash results.
+---
 
-## Future Improvements
+## Current limitations
 
-- Add more thematic and illustrative images to enrich discussions
-- Improve the interface and overall user experience
-- Reduce response latency through retrieval and agent optimization
-- Integrate additional literature databases for broader source coverage
-- Expand language support, particularly for Indian and other regional literatures
+- **Retrieval relies on hand-set rules.** Title matching, page-type detection and thresholds are heuristics that have not been tuned on a labelled dataset.
+- **Wikipedia matching is unverified.** The first usable article is chosen, so an ambiguous name can occasionally return the wrong page.
+- **Long works.** Plays and novels split across many Wikisource subpages are not yet followed page by page.
+- **Source coverage is narrow.** Trusted literary sites (Rekhta, Hindwi, Literary Hub) are only searched for Hindi and Urdu queries; English relies on Wikisource, Wikipedia and web fallback.
+- **Non-English queries are slower** because each language edition is searched in sequence.
+- **OCR** supports English and Hindi only, and accuracy depends on image quality.
+- **Chats are not per-user.** All saved chats share one list, so a public deployment would show everyone the same history.
+- **No automated evaluation yet.** Answer quality has been checked manually.
+
+---
+
+## Future improvements
+
+**Retrieval quality**
+- Replace heuristic matching with semantic ranking (multilingual embeddings, optionally a cross-encoder reranker).
+- Choose thresholds from a labelled set of queries and correct pages, instead of fixed values.
+- Verify the selected Wikipedia article against the intended work or author.
+- Follow index pages and subpages for multi-page works (acts, chapters).
+
+**Coverage**
+- Add more trusted literary sources and a per-language source configuration (for example Project Gutenberg, Poetry Foundation, Kavita Kosh).
+- Expand supported languages, including OCR languages.
+
+**Speed**
+- Search language editions in parallel and cache repeated lookups.
+
+**Evaluation**
+- Offline evaluation on a fixed test set of queries.
+- Online evaluators for hallucination, over-refusal and latency.
+
+**Interface**
+- Chat titles based on the work and author instead of the first message.
+- Per-user chat history.
+
+---
 
 ## Acknowledgements
 
-This project uses the following open-source frameworks and APIs:
-
-- LangChain
-- DeepSeek API
-- Streamlit
-- Wikisource
-- Wikipedia
-- Tavily Search API
-- Unsplash API
-- Tesseract OCR
+LangGraph, LangChain, DeepSeek, Streamlit, Wikisource, Wikipedia, Wikimedia Commons, Rekhta, Hindwi, Literary Hub, Tavily, Unsplash and Tesseract OCR.

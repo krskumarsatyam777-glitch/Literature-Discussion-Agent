@@ -918,11 +918,20 @@ builder.add_edge("generate", END)
 
 pool = ConnectionPool(
     conninfo=os.environ["DATABASE_URL"],
+    min_size=1,
     max_size=5,
+    max_idle=300,
+    max_lifetime=1800,
+    check=ConnectionPool.check_connection,
     open=True,
-    kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
+    kwargs={
+        "autocommit": True,
+        "prepare_threshold": 0,
+        "row_factory": dict_row,
+    },
 )
+
 checkpointer = PostgresSaver(pool)
-checkpointer.setup()  # creates the checkpoint tables; safe to run on every start
+checkpointer.setup() # creates the checkpoint tables; safe to run on every start
 
 graph = builder.compile(checkpointer=checkpointer)

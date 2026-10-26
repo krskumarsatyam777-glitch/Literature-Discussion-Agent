@@ -528,36 +528,29 @@ def web_opinions(state: State):
     return {"results": results}
 
 
-def _parse_meta(text):
-    return dict(
-        line.split(": ", 1) for line in (text or "").splitlines() if ": " in line
-    )
-
-
 def _image_record(result, source):
-    meta = _parse_meta(result.get("text", ""))
     if source == "wikimedia":
         return {
             "source": source,
             "url": result["url"],
             "title": result.get("title", ""),
-            "credit_name": meta.get("Artist", "Unknown"),
-            "credit_url": meta.get("Image page", ""),
-            "page_url": meta.get("Image page", ""),
-            "license": meta.get("License", ""),
-            "license_url": meta.get("License URL", ""),
+            "credit_name": result.get("artist", "Unknown"),
+            "credit_url": result.get("page_url", ""),
+            "page_url": result.get("page_url", ""),
+            "license": result.get("license", ""),
+            "license_url": result.get("license_url", ""),
             "download_location": "",
         }
     return {
         "source": source,
         "url": result["url"],
         "title": result.get("title", ""),
-        "credit_name": meta.get("Photographer", "Unknown"),
-        "credit_url": meta.get("Photographer profile", ""),
-        "page_url": meta.get("Image page", ""),
+        "credit_name": result.get("photographer", "Unknown"),
+        "credit_url": result.get("photographer_url", ""),
+        "page_url": result.get("page_url", ""),
         "license": "Unsplash License",
         "license_url": "",
-        "download_location": meta.get("Download tracking URL", ""),
+        "download_location": result.get("download_location", ""),
     }
 
 

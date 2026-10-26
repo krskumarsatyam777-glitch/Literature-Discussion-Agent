@@ -50,9 +50,9 @@ def get_json(url, params, headers=None, retries=1, timeout=10):
 
 
 def make_result(
-    source, tier, status, title="", url="", text="", error=""
+    source, tier, status, title="", url="", text="", error="", **extra
 ):
-    """Create a consistent result dictionary."""
+    """Create a consistent result dictionary. Extra keyword arguments are added as additional keys."""
     return {
         "source": source,
         "tier": tier,
@@ -61,6 +61,7 @@ def make_result(
         "url": url,
         "text": text,
         "error": error,
+        **extra,
     }
 
 _tavily_client = None
@@ -161,7 +162,7 @@ def _wikisource_page(title, lang="en"):
         soup = BeautifulSoup(html, "html.parser")
         fetched_title = title
 
-        # Index pages link to the real text on a subpage; follow that link
+        #If Index pages link to the real text on a subpage; follow that link
         target_suffix = "/" + urllib.parse.quote(title.replace(" ", "_"))
         subpage_link = soup.find(
             "a",
@@ -642,18 +643,13 @@ def _contains_token_phrase(haystack, phrase):
 
 
 def _image_fields(result):
-    meta = {}
-    for line in (result.get("text") or "").splitlines():
-        if ": " in line:
-            key, value = line.split(": ", 1)
-            meta[key.strip()] = value.strip()
     fields = [
         result.get("title", ""),
-        result.get("object_name") or meta.get("Object name", ""),
-        result.get("image_description") or meta.get("Image description", ""),
-        result.get("categories") or meta.get("Categories", ""),
-        result.get("alt_description") or meta.get("Alt description", ""),
-        result.get("description") or meta.get("Photo description", ""),
+        result.get("object_name", ""),
+        result.get("image_description", ""),
+        result.get("categories", ""),
+        result.get("alt_description", ""),
+        result.get("description", ""),
         " ".join(result.get("tags", [])) if isinstance(result.get("tags"), list)
         else result.get("tags", ""),
     ]
@@ -726,7 +722,7 @@ def unsplash_scene_relevant(result, scene_query):
     return bool(scene_terms and len(scene_terms & field_tokens) >= min(2, len(scene_terms)))
 
 
-# ===============================TOOL 6: UNSPLASH IMAGE SEARCH======================
+# ===============================TOOL 6: UNSPLASH IMAGE SEARCH==================================
 
 UNSPLASH_API = "https://api.unsplash.com/search/photos"
 
@@ -796,16 +792,14 @@ def search_unsplash_images(query, per_page=1):
                 f"Image page: {page_url}\n"
                 f"Download tracking URL: {download_location}"
             ),
+            alt_description=alt_description,
+            description=description,
+            tags=tags,
+            photographer=photographer.get("name", "Unknown"),
+            photographer_url=photographer_url,
+            page_url=page_url,
+            download_location=download_location,
         )
-        result.update({
-            "alt_description": alt_description,
-            "description": description,
-            "tags": tags,
-            "photographer": photographer.get("name", "Unknown"),
-            "photographer_url": photographer_url,
-            "page_url": page_url,
-            "download_location": download_location,
-        })
         found.append(result)
         if len(found) >= max(1, min(int(per_page), 10)):
             break
@@ -902,16 +896,14 @@ def search_wikimedia_images(query, per_page=3):
                 f"License: {license_name}\n"
                 f"License URL: {license_url}"
             ),
+            page_url=page_url,
+            artist=artist,
+            object_name=object_name,
+            image_description=description,
+            categories=categories,
+            license=license_name,
+            license_url=license_url,
         )
-        result.update({
-            "page_url": page_url,
-            "artist": artist,
-            "object_name": object_name,
-            "image_description": description,
-            "categories": categories,
-            "license": license_name,
-            "license_url": license_url,
-        })
         found.append(result)
         if len(found) >= max(1, int(per_page)):
             break
